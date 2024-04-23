@@ -94,15 +94,15 @@ facility, the name of the member formatted as a single column, and the cost.
 Order by descending cost, and do not use any subqueries. */
 SELECT 
 f.name as facility_name,
-CONCAT_WS(' ', firstname, surname) as member_name,
-case when memid = 0 then guestcost
-else membercost end as cost
-FROM `Bookings` as b
-LEFT JOIN `Facilities` as f
+CONCAT_WS(' ', firstname, surname) AS member_name,
+CASE WHEN memid = 0 THEN guestcost
+ELSE membercost end AS cost
+FROM `Bookings` AS b
+LEFT JOIN `Facilities` AS f
 USING (facid)
-LEFT JOIN `Members` as m
+LEFT JOIN `Members` AS m
 USING (memid)
-WHERE b.starttime like '2012-09-14%'
+WHERE b.starttime LIKE '2012-09-14%'
 AND (
     (memid = 0 and guestcost > 30) or
     (memid != 0 and membercost > 30)
@@ -113,8 +113,8 @@ AND (
 SELECT 
 f.name as facility_name,
 CONCAT_WS(' ', firstname, surname) as member_name,
-case when memid = 0 then guestcost
-else membercost end as cost
+CASE WHEN memid = 0 THEN guestcost
+ELSE membercost END as cost
 FROM `Bookings` as b
 LEFT JOIN `Facilities` as f
 USING (facid)
@@ -146,6 +146,20 @@ QUESTIONS:
 The output of facility name and total revenue, sorted by revenue. Remember
 that there's a different cost for guests and members! */
 
+SELECT * FROM (SELECT 
+f.name as facility_name,
+SUM(
+    CASE WHEN memid = 0 THEN guestcost
+ELSE membercost END 
+) as total_revenue
+FROM `Bookings` as b
+LEFT JOIN `Facilities` as f
+USING (facid)
+LEFT JOIN `Members` as m
+USING (memid)
+GROUP BY facility_name) as revenue
+WHERE total_revenue < 1000;
+
 ('Table Tennis', 90)
 ('Snooker Table', 115)
 ('Pool Table', 265)
@@ -153,19 +167,48 @@ that there's a different cost for guests and members! */
 
 /* Q11: Produce a report of members and who recommended them in alphabetic surname,firstname order */
 
-(15, 'Bader', 'Florence', '264 Ursula Drive, Westford', 84923, '(833) 499-3527', '9', '2012-08-10 17:52:03')
-(16, 'Baker', 'Timothy', '329 James Street, Reading', 58393, '833-941-0824', '13', '2012-08-15 10:34:25')
-(5, 'Butters', 'Gerald', '1065 Huntingdon Avenue, Boston', 56754, '(844) 078-4130', '1', '2012-07-09 10:44:09')
-(13, 'Farrell', 'Jemima', '103 Firth Avenue, North Reading', 57392, '(855) 016-0163', '', '2012-08-10 14:28:01')
-(20, 'Genting', 'Matthew', '4 Nunnington Place, Wingfield, Boston', 52365, '(811) 972-1377', '5', '2012-08-19 14:55:55')
-(11, 'Jones', 'David', '976 Gnats Close, Reading', 33862, '(844) 536-8036', '4', '2012-08-06 16:32:55')
-(4, 'Joplette', 'Janice', '20 Crossing Road, New York', 234, '(833) 942-4710', '1', '2012-07-03 10:25:05')
-(30, 'Purview', 'Millicent', '641 Drudgery Close, Burnington, Boston', 34232, '(855) 941-9786', '2', '2012-09-18 19:04:01')
-(3, 'Rownam', 'Tim', '23 Highway Way, Boston', 23423, '(844) 693-0723', '', '2012-07-03 09:32:15')
-(1, 'Smith', 'Darren', '8 Bloomsbury Close, Boston', 4321, '555-555-5555', '', '2012-07-02 12:02:05')
-(2, 'Smith', 'Tracy', '8 Bloomsbury Close, New York', 4321, '555-555-5555', '', '2012-07-02 12:08:23')
-(9, 'Stibbons', 'Ponder', '5 Dragons Way, Winchester', 87630, '(833) 160-3900', '6', '2012-07-25 17:09:05')
-(6, 'Tracy', 'Burton', '3 Tunisia Drive, Boston', 45678, '(822) 354-9973', '', '2012-07-15 08:52:55')
+SELECT 
+m.memid,
+m.surname,
+m.firstname,
+m2.firstname as recomender_firstname,
+m2.surname as recomender_surname
+FROM `Members` as m
+left join `Members` as m2
+on m.recommendedby = m2.memid
+where m.memid != 0
+order by m.surname, m.firstname;
+
+(15, 'Bader', 'Florence', 'Ponder', 'Stibbons')
+(12, 'Baker', 'Anne', 'Ponder', 'Stibbons')
+(16, 'Baker', 'Timothy', 'Jemima', 'Farrell')
+(8, 'Boothe', 'Tim', 'Tim', 'Rownam')
+(5, 'Butters', 'Gerald', 'Darren', 'Smith')
+(22, 'Coplin', 'Joan', 'Timothy', 'Baker')
+(36, 'Crumpet', 'Erica', 'Tracy', 'Smith')
+(7, 'Dare', 'Nancy', 'Janice', 'Joplette')
+(28, 'Farrell', 'David', None, None)
+(13, 'Farrell', 'Jemima', None, None)
+(20, 'Genting', 'Matthew', 'Gerald', 'Butters')
+(35, 'Hunt', 'John', 'Millicent', 'Purview')
+(11, 'Jones', 'David', 'Janice', 'Joplette')
+(26, 'Jones', 'Douglas', 'David', 'Jones')
+(4, 'Joplette', 'Janice', 'Darren', 'Smith')
+(21, 'Mackenzie', 'Anna', 'Darren', 'Smith')
+(10, 'Owen', 'Charles', 'Darren', 'Smith')
+(17, 'Pinker', 'David', 'Jemima', 'Farrell')
+(30, 'Purview', 'Millicent', 'Tracy', 'Smith')
+(3, 'Rownam', 'Tim', None, None)
+(27, 'Rumney', 'Henrietta', 'Matthew', 'Genting')
+(24, 'Sarwin', 'Ramnaresh', 'Florence', 'Bader')
+(1, 'Smith', 'Darren', None, None)
+(37, 'Smith', 'Darren', None, None)
+(14, 'Smith', 'Jack', 'Darren', 'Smith')
+(2, 'Smith', 'Tracy', None, None)
+(9, 'Stibbons', 'Ponder', 'Burton', 'Tracy')
+(6, 'Tracy', 'Burton', None, None)
+(33, 'Tupperware', 'Hyacinth', None, None)
+(29, 'Worthington-Smyth', 'Henry', 'Tracy', 'Smith')
 
 /* Q12: Find the facilities with their usage by member, but not guests */
 ('Badminton Court', 344)
@@ -180,6 +223,19 @@ that there's a different cost for guests and members! */
 
 
 /* Q13: Find the facilities usage by month, but not guests */
+
+SELECT
+f.name as fname,
+bookid,
+MONTH(starttime) as month
+FROM `Bookings`
+LEFT JOIN `Facilities` as f
+USING (facid)
+LEFT JOIN `Members` as m
+USING (memid)
+group by fname, month
+order by fname, month;
+
 ('Badminton Court', 18, '07')
 ('Badminton Court', 662, '08')
 ('Badminton Court', 2141, '09')
