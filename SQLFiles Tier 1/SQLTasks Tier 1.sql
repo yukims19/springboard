@@ -69,7 +69,8 @@ who signed up. Try not to use the LIMIT clause for your solution. */
 SELECT 
 surname as lastname,
 firstname
-FROM `Members`;
+FROM `Members`
+WHERE joindate = (select max(joindate) FROM `Members`);
 
 /* Q7: Produce a list of all members who have used a tennis court.
 Include in your output the name of the court, and the name of the member
